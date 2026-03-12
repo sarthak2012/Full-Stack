@@ -1,0 +1,15 @@
+{
+  "name": "sql_advance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sarthak",
+  "license": "ISC",
+  "dependencies": {
+    "@faker-js/faker": "^10.3.0",
+    "mysql2": "^3.17.2"
+  }
+}

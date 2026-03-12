@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Users</title>
+</head>
+<body>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+        </tr>
+        <% results.forEach(result => { %>
+            <tr>
+                <td><%= result.id %></td>
+                <td><%= result.username %></td>
+                <td><%= result.email %></td>
+                <td>
+                <form action="/user/<%= result.id %>/edit" method="get">
+                    <button>Edit User</button>
+                </form></td>
+            </tr>
+        <% }) %>
+    </table>
+    
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Whatsapp</title>
+</head>
+<body>
+    <h3>All Chats</h3>
+    <form action="/chats/new" method="get">
+        <button type="submit">new chat</button>
+    </form>
+    <ul>
+        <% chats.forEach(chat => { %>
+            <li>
+                <strong><%= chat.from %></strong> to <strong><%= chat.to %></strong>: <%= chat.msg %>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>

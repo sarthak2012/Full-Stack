@@ -1,0 +1,47 @@
+
+
+body {
+  background-color: #f6f7f8;
+  padding: 40px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #e82d23;
+}
+
+.posts-container {
+  max-width: 800px;
+  margin: auto;
+}
+
+.post-card {
+  background: #de8d8d;
+  padding: 20px 25px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-3px);
+}
+
+.username {
+  color: #3f28b4;
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 20px;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.content {
+  font-size: 15px;
+  color: #000000;
+  line-height: 1.6;
+}
