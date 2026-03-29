@@ -52,14 +52,20 @@ app.listen(8080, () => {
 
 //THis route will take us to form which upon fillig and submitting will create a new listing in the database
 app.get("/listings/new", async (req, res) => {
+
   res.render("listings/new.ejs");
 });
 
 //THis route will create a new listing that was filled in the form and submitted
 app.post("/listings", async (req, res) => {
-  const newListing = new Listing(req.body.listing);
-  await newListing.save();
-  res.redirect("/listings");
+  try {
+    const newListing = new Listing(req.body.listing);
+    await newListing.save();
+    res.redirect("/listings");
+  } catch (err) {
+    console.log(err);
+    res.send("Error creating listing");
+  }
 });
 
 //show route - to show all details of a specific listing id
