@@ -5,10 +5,14 @@ const MONGO_URL = "mongodb://localhost:27017/wanderlust";
 const Listing = require("./models/listing");
 const methodOverride = require("method-override");
 const path = require("path"); // to use path module for joining paths
-app.set("view engine", "ejs"); // to set the view engine to ejs and render ejs files from views folder
-app.set("views", path.join(__dirname, "views")); // to set the views folder as the location for our ejs files
+const ejsMate = require("ejs-mate"); // to use ejs-mate for layouts and partials in ejs
+
+app.engine("ejs", ejsMate);
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true })); // to parse the form data from the request body
 app.use(methodOverride("_method")); // to use method override for PUT and DELETE requests
+app.use(express.static(path.join(__dirname, "/public"))); // to serve static files from the public folder
 
 main()
   .then(() => console.log("Connected to MongoDB"))
@@ -79,10 +83,11 @@ app.put("/listings/:id", async (req, res) => {
   const listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
   res.redirect(`/listings/${id}`);
 });
-
+ 
 //Delete route
 app.delete("/listings/:id", async (req, res) => {
   let { id } = req.params;
-  await Listing.findByIdAndDelete(id);
+  let DeletedListing = await Listing.findByIdAndDelete(id);
+  console.log("Deleted listing:", DeletedListing);
   res.redirect("/listings");
 }); 
