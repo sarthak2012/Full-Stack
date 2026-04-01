@@ -6,6 +6,8 @@ const Listing = require("./models/listing");
 const methodOverride = require("method-override");
 const path = require("path"); // to use path module for joining paths
 const ejsMate = require("ejs-mate"); // to use ejs-mate for layouts and partials in ejs
+const wrapAsync = require("./utils/wrapAsync"); // to use wrapAsync for error handling in async functions
+const ExpressError = require("./utils/ExpressError"); // to use ExpressError for custom error handling
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
@@ -41,59 +43,70 @@ app.get("/", (req, res) => {
 // });
 
 // Index Route - to show all listings
-app.get("/listings", async (req, res) => {
+app.get("/listings",wrapAsync(async (req, res) => {
   const allListings = await Listing.find({});
   res.render("listings/index", { allListings });
+}));
+
+//THis route will take us to form which upon fillig and submitting will create a new listing in the database
+app.get("/listings/new", wrapAsync(async (req, res) => {
+  res.render("listings/new.ejs");
+}));
+
+//THis route will create a new listing that was filled in the form and submitted
+app.post(
+  "/listings",
+  wrapAsync(async (req, res) => {
+    if(!req.body.listing) {
+      throw new ExpressError(400, "Invalid listing data");
+    }
+    const newListing = new Listing(req.body.listing);
+    await newListing.save();
+    res.redirect("/listings");
+  }),
+);
+
+//show route - to show all details of a specific listing id
+app.get("/listings/:id", wrapAsync(async (req, res) => {
+  let { id } = req.params;
+  const listing = await Listing.findById(id);
+  res.render("listings/show.ejs", { listing });
+}));
+
+//Upadate route ==>Edit form And Update Route
+//remder editing form
+app.get("/listings/:id/edit", wrapAsync(async (req, res) => {
+  let { id } = req.params;
+  const listing = await Listing.findById(id);
+  res.render("listings/edit.ejs", { listing });
+}));
+
+//update route after submitting the edit form
+app.put("/listings/:id", wrapAsync(async (req, res) => {
+  let { id } = req.params;
+  const listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+  res.redirect(`/listings/${id}`);
+}));
+
+//Delete route
+app.delete("/listings/:id", wrapAsync(async (req, res) => {
+  let { id } = req.params;
+  let DeletedListing = await Listing.findByIdAndDelete(id);
+  console.log("Deleted listing:", DeletedListing);
+  res.redirect("/listings");
+}));
+
+//backend / server error handling middleware
+// app.use((err, req, res, next) => {
+//   console.error(err.stack);
+//   res.status(500).send("Something went wrong! Please try again later.");
+// });
+
+app.use((err, req, res, next) => {
+  let { statusCode = 500 , message = "Something went wrong!" } = err;
+  res.render("error.ejs", {  message });
 });
 
 app.listen(8080, () => {
   console.log("Server is running on port 8080");
 });
-
-//THis route will take us to form which upon fillig and submitting will create a new listing in the database
-app.get("/listings/new", async (req, res) => {
-
-  res.render("listings/new.ejs");
-});
-
-//THis route will create a new listing that was filled in the form and submitted
-app.post("/listings", async (req, res) => {
-  try {
-    const newListing = new Listing(req.body.listing);
-    await newListing.save();
-    res.redirect("/listings");
-  } catch (err) {
-    console.log(err);
-    res.send("Error creating listing");
-  }
-});
-
-//show route - to show all details of a specific listing id
-app.get("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listings/show.ejs", { listing });
-});
-
-//Upadate route ==>Edit form And Update Route
-//remder editing form
-app.get("/listings/:id/edit", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listings/edit.ejs", { listing });
-});
-
-//update route after submitting the edit form
-app.put("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-  res.redirect(`/listings/${id}`);
-});
- 
-//Delete route
-app.delete("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  let DeletedListing = await Listing.findByIdAndDelete(id);
-  console.log("Deleted listing:", DeletedListing);
-  res.redirect("/listings");
-}); 
