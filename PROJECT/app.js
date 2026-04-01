@@ -133,5 +133,5 @@ app.delete(
 app.use((err, req, res, next) => {
   console.log(err); // debug
   let { statusCode = 500, message = "Something went wrong!" } = err;
-  res.render("error", { message });
+  res.render("error.ejs", { message, err });
 });
