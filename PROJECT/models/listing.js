@@ -7,16 +7,12 @@ const listingSchema = new Schema({
     required: true,
   },
   description: String,
-
-  price: Number,
-
-  location: String,
-
   image: {
     filename: String,
     url: String,
   },
-
+  price: Number,
+  location: String,
   country: String, // ✅ lowercase (matches your data)
 });
 

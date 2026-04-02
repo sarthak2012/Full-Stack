@@ -8,6 +8,7 @@ const path = require("path"); // to use path module for joining paths
 const ejsMate = require("ejs-mate"); // to use ejs-mate for layouts and partials in ejs
 const wrapAsync = require("./utils/wrapAsync"); // to use wrapAsync for error handling in async functions
 const ExpressError = require("./utils/ExpressError"); // to use ExpressError for custom error handling
+const { listingSchema } = require("./schema"); // to use listingSchema for validating listing data
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
@@ -15,7 +16,6 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true })); // to parse the form data from the request body
 app.use(methodOverride("_method")); // to use method override for PUT and DELETE requests
 app.use(express.static(path.join(__dirname, "/public"))); // to serve static files from the public folder
-
 
 async function main() {
   try {
@@ -25,7 +25,6 @@ async function main() {
     app.listen(8080, () => {
       console.log("Server is running on port 8080");
     });
-
   } catch (err) {
     console.log(err);
   }
@@ -50,6 +49,19 @@ app.get("/", (req, res) => {
 //     res.send("Sample listing created and saved to the database.");
 // });
 
+// Validating listing data using Joi schema before creating a new listing in the database
+// validating as a joi midlleware
+
+const validateListing = (req, res, next) => {
+  let { error } = listingSchema.validate(req.body);
+  if (error) {
+    let errorMessage = error.details.map((el) => el.message).join(",");
+    throw new ExpressError(400, errorMessage);
+  } else {
+    next();
+  }
+};
+
 // Index Route - to show all listings
 app.get(
   "/listings",
@@ -70,10 +82,8 @@ app.get(
 //THis route will create a new listing that was filled in the form and submitted
 app.post(
   "/listings",
-  wrapAsync(async (req, res) => {
-    if (!req.body.listing) {
-      throw new ExpressError(400, "Invalid listing data");
-    }
+  validateListing,
+  wrapAsync(async (req, res, next) => {
     const newListing = new Listing(req.body.listing);
     await newListing.save();
     res.redirect("/listings");
@@ -104,6 +114,7 @@ app.get(
 //update route after submitting the edit form
 app.put(
   "/listings/:id",
+  validateListing,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     const listing = await Listing.findByIdAndUpdate(id, {
