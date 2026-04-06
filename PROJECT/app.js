@@ -8,7 +8,8 @@ const path = require("path"); // to use path module for joining paths
 const ejsMate = require("ejs-mate"); // to use ejs-mate for layouts and partials in ejs
 const wrapAsync = require("./utils/wrapAsync"); // to use wrapAsync for error handling in async functions
 const ExpressError = require("./utils/ExpressError"); // to use ExpressError for custom error handling
-const { listingSchema } = require("./schema"); // to use listingSchema for validating listing data
+const { listingSchema, reviewSchema } = require("./schema"); // to use listingSchema for validating listing data
+const Review = require("./models/review"); // to use Review model for creating and saving reviews in the database
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
@@ -62,6 +63,24 @@ const validateListing = (req, res, next) => {
   }
 };
 
+// Validating review data using Joi schema before creating a
+// new review in the database
+// validating as a joi midlleware
+
+const validateReview = (req, res, next) => {
+  if (!req.body || !req.body.review) {
+    throw new ExpressError(400, "Review is required");
+  }
+
+  const { error } = reviewSchema.validate(req.body);
+
+  if (error) {
+    let errMsg = error.details.map((el) => el.message).join(",");
+    throw new ExpressError(400, errMsg);
+  } else {
+    next();
+  }
+};
 // Index Route - to show all listings
 app.get(
   "/listings",
@@ -95,7 +114,7 @@ app.get(
   "/listings/:id",
   wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     res.render("listings/show.ejs", { listing });
   }),
 );
@@ -134,7 +153,35 @@ app.delete(
     res.redirect("/listings");
   }),
 );
+//Reviews routes
+//post route to create a new review for a specific listing
+app.post(
+  "/listings/:id/reviews",
+  validateReview,
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    let listing = await Listing.findById(id);
+    let newReview = new Review(req.body.review);
 
+    listing.reviews.push(newReview._id);
+
+    await newReview.save();
+    await listing.save();
+
+    res.redirect(`/listings/${listing._id}`);
+  }),
+);
+
+//Delete route to delete a review for a specific listing
+app.delete(
+  "/listings/:id/reviews/:reviewId",
+  wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
+    await Review.findByIdAndDelete(reviewId);
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    res.redirect(`/listings/${id}`);
+  }),
+);
 //backend / server error handling middleware
 // app.use((err, req, res, next) => {
 //   console.error(err.stack);
