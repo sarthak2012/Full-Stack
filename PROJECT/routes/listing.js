@@ -1,92 +1,113 @@
-const express = require("express"); // to use express for creating the server and handling routes
-const router = express.Router(); // to create a router for handling listing routes
+const express = require("express");
+const router = express.Router();
 const Listing = require("../models/listing");
-const wrapAsync = require("../utils/wrapAsync"); // to use wrapAsync for handling async errors in routes
-const { listingSchema } = require("../schema"); // to use listingSchema for validating listing data
-const ExpressError = require("../utils/ExpressError"); //   to use ExpressError for custom error handling
+const wrapAsync = require("../utils/wrapAsync");
+const { listingSchema } = require("../schema");
+const ExpressError = require("../utils/ExpressError");
 
-// Validating listing data using Joi schema before creating a new listing in the database
-// validating as a joi midlleware
+// ✅ Joi validation middleware
 const validateListing = (req, res, next) => {
-  let { error } = listingSchema.validate(req.body);
+  const { error } = listingSchema.validate(req.body);
+
   if (error) {
-    let errorMessage = error.details.map((el) => el.message).join(",");
-    throw new ExpressError(400, errorMessage);
-  } else {
-    next();
+    const errMsg = error.details.map((el) => el.message).join(",");
+    return next(new ExpressError(400, errMsg));
   }
+  next();
 };
 
-// Index Route - to show all listings
+// ✅ Index Route
 router.get(
   "/",
   wrapAsync(async (req, res) => {
     const allListings = await Listing.find({});
     res.render("listings/index", { allListings });
-  }),
+  })
 );
 
-//THis route will take us to form which upon fillig and submitting will create a new listing in the database
-router.get(
-  "/new",
-  wrapAsync(async (req, res) => {
-    res.render("listings/new.ejs");
-  }),
-);
+// ✅ New Route
+router.get("/new", (req, res) => {
+  res.render("listings/new.ejs");
+});
 
-//THis route will create a new listing that was filled in the form and submitted
+// ✅ Create Route
 router.post(
   "/",
   validateListing,
-  wrapAsync(async (req, res, next) => {
+  wrapAsync(async (req, res) => {
     const newListing = new Listing(req.body.listing);
     await newListing.save();
     res.redirect("/listings");
-  }),
+  })
 );
 
-//show route - to show all details of a specific listing id
+// ✅ Show Route (IMPORTANT FIX HERE)
 router.get(
   "/:id",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
+  wrapAsync(async (req, res, next) => {
+    const { id } = req.params;
+
     const listing = await Listing.findById(id).populate("reviews");
+
+    // 🔥 FIX: handle invalid ID / not found
+    if (!listing) {
+      return next(new ExpressError(404, "Listing Not Found"));
+    }
+
     res.render("listings/show.ejs", { listing });
-  }),
+  })
 );
 
-//Upadate route ==>Edit form And Update Route
-//remder editing form
+// ✅ Edit Route
 router.get(
   "/:id/edit",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
+  wrapAsync(async (req, res, next) => {
+    const { id } = req.params;
+
     const listing = await Listing.findById(id);
+
+    if (!listing) {
+      return next(new ExpressError(404, "Listing Not Found"));
+    }
+
     res.render("listings/edit.ejs", { listing });
-  }),
+  })
 );
 
-//update route after submitting the edit form
+// ✅ Update Route
 router.put(
   "/:id",
   validateListing,
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    const listing = await Listing.findByIdAndUpdate(id, {
+  wrapAsync(async (req, res, next) => {
+    const { id } = req.params;
+
+    const updatedListing = await Listing.findByIdAndUpdate(id, {
       ...req.body.listing,
     });
+
+    if (!updatedListing) {
+      return next(new ExpressError(404, "Listing Not Found"));
+    }
+
     res.redirect(`/listings/${id}`);
-  }),
+  })
 );
 
-//Delete route
+// ✅ Delete Route
 router.delete(
   "/:id",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    let DeletedListing = await Listing.findByIdAndDelete(id);
-    console.log("Deleted listing:", DeletedListing);
+  wrapAsync(async (req, res, next) => {
+    const { id } = req.params;
+
+    const deletedListing = await Listing.findByIdAndDelete(id);
+
+    if (!deletedListing) {
+      return next(new ExpressError(404, "Listing Not Found"));
+    }
+
+    console.log("Deleted listing:", deletedListing);
     res.redirect("/listings");
-  }),
+  })
 );
+
 module.exports = router;

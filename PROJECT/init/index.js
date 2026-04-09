@@ -9,7 +9,10 @@ async function main() {
     await mongoose.connect(MONGO_URL);
     console.log("Connected to MongoDB");
 
-    await initDB(); // ✅ wait for connection
+    await initDB();
+
+    mongoose.connection.close(); // ✅ close DB after seeding
+    console.log("Database connection closed");
 
   } catch (err) {
     console.error(err);
