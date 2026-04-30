@@ -22,7 +22,7 @@ router.get(
   wrapAsync(async (req, res) => {
     const allListings = await Listing.find({});
     res.render("listings/index", { allListings });
-  })
+  }),
 );
 
 // ✅ New Route
@@ -37,8 +37,9 @@ router.post(
   wrapAsync(async (req, res) => {
     const newListing = new Listing(req.body.listing);
     await newListing.save();
+    req.flash("success", "New listing created successfully!");
     res.redirect("/listings");
-  })
+  }),
 );
 
 // ✅ Show Route (IMPORTANT FIX HERE)
@@ -51,11 +52,12 @@ router.get(
 
     // 🔥 FIX: handle invalid ID / not found
     if (!listing) {
-      return next(new ExpressError(404, "Listing Not Found"));
+      req.flash("error", " Listing does not exist!");
+      res.redirect("/listings");
     }
 
     res.render("listings/show.ejs", { listing });
-  })
+  }),
 );
 
 // ✅ Edit Route
@@ -71,7 +73,7 @@ router.get(
     }
 
     res.render("listings/edit.ejs", { listing });
-  })
+  }),
 );
 
 // ✅ Update Route
@@ -88,9 +90,9 @@ router.put(
     if (!updatedListing) {
       return next(new ExpressError(404, "Listing Not Found"));
     }
-
+    req.flash("success", "Listing Updated Successfully!");
     res.redirect(`/listings/${id}`);
-  })
+  }),
 );
 
 // ✅ Delete Route
@@ -106,8 +108,9 @@ router.delete(
     }
 
     console.log("Deleted listing:", deletedListing);
+    req.flash("success", "listing Deleted Successfully!");
     res.redirect("/listings");
-  })
+  }),
 );
 
 module.exports = router;
