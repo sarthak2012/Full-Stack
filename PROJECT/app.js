@@ -9,13 +9,14 @@ const ExpressError = require("./utils/ExpressError");
 const session = require("express-session");
 const flash = require("connect-flash");
 
-const passport = require("passport"); 
-const LocalStrategy = require("passport-local").Strategy; 
-const User = require("./models/user"); 
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+const User = require("./models/user");
 
 // routers
 const listingRoutes = require("./routes/listing");
 const reviewRoutes = require("./routes/review");
+const userRouter = require("./routes/user");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 
@@ -69,16 +70,15 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // demo route to create a user and register it in the database using passport local mongoose
-app.get("/demouser", async (req, res) => {
-  const fakeUser = new User({ 
-    email: "student@gmail.com",
-    username: "delta-student", 
-  });
-  let registeredUser = await User.register(fakeUser, "helloworld");
-  res.send(registeredUser);
-});
+// app.get("/demouser", async (req, res) => {
+//   const fakeUser = new User({
+//     email: "student@gmail.com",
+//     username: "delta-student",
+//   });
+//   let registeredUser = await User.register(fakeUser, "helloworld");
+//   res.send(registeredUser);
+// });
 
 // app.get("/testlisting", async (req, res) => {
 //     let sampleListings = new Listing({
@@ -106,6 +106,9 @@ app.use("/listings", listingRoutes);
 
 // review routes (nested)
 app.use("/listings/:id/reviews", reviewRoutes);
+
+// review routes (nested)
+app.use("/", userRouter);
 
 // 404 handler
 app.use((req, res, next) => {
