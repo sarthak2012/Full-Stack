@@ -2,20 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Listing = require("../models/listing");
 const wrapAsync = require("../utils/wrapAsync");
-const { listingSchema } = require("../schema");
-const ExpressError = require("../utils/ExpressError");
-const { isLoggedIn } = require("../middleware");
-
-// ✅ Joi validation middleware
-const validateListing = (req, res, next) => {
-  const { error } = listingSchema.validate(req.body);
-
-  if (error) {
-    const errMsg = error.details.map((el) => el.message).join(",");
-    return next(new ExpressError(400, errMsg));
-  }
-  next();
-};
+const { isLoggedIn, isOwner, validateListing } = require("../middleware");
 
 // ✅ Index Route
 router.get(
@@ -36,7 +23,7 @@ router.post(
   "/",
   isLoggedIn,
   validateListing,
-  
+
   wrapAsync(async (req, res) => {
     const newListing = new Listing(req.body.listing);
     newListing.owner = req.user._id; // Associate listing with logged-in user
@@ -68,6 +55,7 @@ router.get(
 router.get(
   "/:id/edit",
   isLoggedIn,
+  isOwner,
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
 
@@ -85,6 +73,7 @@ router.get(
 router.put(
   "/:id",
   isLoggedIn,
+  isOwner,
   validateListing,
 
   wrapAsync(async (req, res, next) => {
@@ -106,6 +95,7 @@ router.put(
 router.delete(
   "/:id",
   isLoggedIn,
+  isOwner,
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
 
