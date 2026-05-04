@@ -36,9 +36,10 @@ router.post(
   "/",
   isLoggedIn,
   validateListing,
-
+  
   wrapAsync(async (req, res) => {
     const newListing = new Listing(req.body.listing);
+    newListing.owner = req.user._id; // Associate listing with logged-in user
     await newListing.save();
     req.flash("success", "New listing created successfully!");
     res.redirect("/listings");
@@ -55,8 +56,8 @@ router.get(
 
     // 🔥 FIX: handle invalid ID / not found
     if (!listing) {
-      req.flash("error", " Listing does not exist!");
-      res.redirect("/listings");
+      req.flash("error", "Listing does not exist!");
+      return res.redirect("/listings");
     }
 
     res.render("listings/show.ejs", { listing });

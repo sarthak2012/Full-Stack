@@ -24,6 +24,8 @@ const initDB = async () => {
     await Listing.deleteMany({});
     console.log("Existing listings cleared.");
 
+    //to add an owner to the listing.
+    initData.data = initData.data.map((obj) => ({ ...obj, owner: "69f7fb27254b0f5c26b219d5" })); //using demo3 user's id as owner for all listings
     await Listing.insertMany(initData.data);
     console.log("Sample listings inserted.");
 
