@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/user");
 const wrapAsync = require("../utils/wrapAsync");
 const passport = require("passport");
+const { errors } = require("passport-local-mongoose");
 
 router.get("/signup", (req, res) => {
   res.render("users/signup.ejs");
@@ -16,8 +17,13 @@ router.post(
       let newUser = new User({ username, email });
       let registeredUser = await User.register(newUser, password);
       console.log(registeredUser);
-      req.flash("success", "Welcome to Wanderlust!");
-      res.redirect("/listings");
+      req.login(registeredUser, (err) => {
+        if (err) {
+          return next(err);
+        }
+        req.flash("success", "Welcome to Wanderlust!");
+        res.redirect("/listings");
+      });
     } catch (e) {
       req.flash("error", e.message);
       res.redirect("/signup");
@@ -40,5 +46,16 @@ router.post(
     res.redirect("/listings");
   }),
 );
+
+router.get("/logout", (req, res) => {
+  req.logOut((err) => {
+    if (err) {
+      return next(err);
+    } else {
+      req.flash("success", "Logged out successfully!");
+      res.redirect("/listings");
+    }
+  });
+});
 
 module.exports = router;

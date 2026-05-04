@@ -4,6 +4,7 @@ const Listing = require("../models/listing");
 const wrapAsync = require("../utils/wrapAsync");
 const { listingSchema } = require("../schema");
 const ExpressError = require("../utils/ExpressError");
+const { isLoggedIn } = require("../middleware");
 
 // ✅ Joi validation middleware
 const validateListing = (req, res, next) => {
@@ -26,14 +27,16 @@ router.get(
 );
 
 // ✅ New Route
-router.get("/new", (req, res) => {
+router.get("/new", isLoggedIn, (req, res) => {
   res.render("listings/new.ejs");
 });
 
 // ✅ Create Route
 router.post(
   "/",
+  isLoggedIn,
   validateListing,
+
   wrapAsync(async (req, res) => {
     const newListing = new Listing(req.body.listing);
     await newListing.save();
@@ -63,6 +66,7 @@ router.get(
 // ✅ Edit Route
 router.get(
   "/:id/edit",
+  isLoggedIn,
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
 
@@ -79,7 +83,9 @@ router.get(
 // ✅ Update Route
 router.put(
   "/:id",
+  isLoggedIn,
   validateListing,
+
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
 
@@ -98,6 +104,7 @@ router.put(
 // ✅ Delete Route
 router.delete(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
 
