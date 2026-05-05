@@ -38,8 +38,10 @@ router.get(
   "/:id",
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
-
-    const listing = await Listing.findById(id).populate("reviews");
+    const listing = await Listing.findById(id).populate({
+      path: "reviews",
+      populate: { path: "auther" },
+    });
 
     // 🔥 FIX: handle invalid ID / not found
     if (!listing) {
